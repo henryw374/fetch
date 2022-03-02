@@ -1,11 +1,9 @@
 (ns lambdaisland.fetch
   (:refer-clojure :exclude [get])
-  (:require [applied-science.js-interop :as j]
-            [clojure.core :as c]
+  (:require [clojure.core :as c]
             [clojure.set :as set]
             [clojure.string :as str]
             [cognitect.transit :as transit]
-            [kitchen-async.promise :as p]
             [lambdaisland.uri :as uri]
             [lambdaisland.uri.normalize :as uri-normalize]))
 
@@ -54,17 +52,20 @@
 (defmulti decode-body (fn [content-type bodyp opts] content-type))
 
 (defmethod decode-body :default [_ response opts]
-  (j/call response :text))
+  (.text ^js response))
 
 (defmethod decode-body :transit-json [_ response opts]
-  (p/let [text (j/call response :text)]
-    (let [decoded (transit/read (:transit-json-reader opts @transit-json-reader) text)]
-      (if (satisfies? IWithMeta decoded)
-        (vary-meta decoded assoc ::raw text)
-        decoded))))
+  (->
+    (.text ^js response)
+    (.then
+      (fn [text]
+        (let [decoded (transit/read (:transit-json-reader opts @transit-json-reader) text)]
+          (if (satisfies? IWithMeta decoded)
+            (vary-meta decoded assoc ::raw text)
+            decoded))))))
 
 (defmethod decode-body :json [_ response opts]
-  (j/call response :json))
+  (.json ^js response))
 
 (defn fetch-opts [{:keys [method accept content-type
                           headers redirect mode cache signal
@@ -80,7 +81,7 @@
   (let [fetch-headers #js {"Accept"       (c/get content-types accept)
                            "Content-Type" (c/get content-types content-type)}]
     (doseq [[k v] headers]
-      (j/assoc! fetch-headers k v))
+      (aset fetch-headers k v))
     #js {:method          (str/upper-case (name method))
          :headers         fetch-headers
          :redirect        (name redirect)
@@ -94,32 +95,39 @@
                        :as   opts
                        :or   {accept       :transit-json
                               content-type :transit-json}}]]
-  (let [url (-> (uri/uri url)
-                (uri/assoc-query* query-params)
-                str)
-        request (cond-> (fetch-opts opts)
-                  body
-                  (j/assoc! :body (if (string? body)
-                                    body
-                                    (encode-body content-type body opts))))]
-    (p/let [response (js/fetch url request)]
-      (p/try
-        (let [headers             (j/get response :headers)
-              header-map          (into {} (map vec) (es6-iterator-seq (j/call headers :entries)))
-              content-type-header (j/call headers :get "Content-Type")
-              content-type        (when content-type-header
-                                    (c/get (set/map-invert content-types)
-                                           (str/replace content-type-header #";.*" "")))]
-          (p/let [body (decode-body content-type response opts)]
-            ^{::request  (j/assoc! request :url url)
-              ::response response}
-            {:status  (j/get response :status)
-             :headers header-map
-             :body    body}))
-        (p/catch :default e
-          ^{::request  (j/assoc! request :url url)
-            ::response response}
-          {:error e})))))
+  (let [url     (-> url
+                    uri/uri
+                    (uri/assoc-query* query-params)
+                    str)
+        request (let [r (fetch-opts opts)]
+                  (when body
+                    (aset r "body" (if (string? body)
+                                      body
+                                      (encode-body content-type body opts))))
+                  (aset r "url" url)
+                  r)]
+    (->
+      (js/fetch url request)
+      (.then
+        (fn [response]
+          (let [headers (.-headers ^js response)
+                header-map (into {} (map vec) (es6-iterator-seq (.entries ^js headers)))
+                content-type-header (.get ^js headers "Content-Type")
+                content-type (when content-type-header
+                               (c/get (set/map-invert content-types)
+                                 (str/replace content-type-header #";.*" "")))]
+            (->
+              (decode-body content-type response opts)
+              (.then (fn [body]
+                       ^{::request  request
+                         ::response response}
+                       {:status  (.-status ^js response)
+                        :headers header-map
+                        :body    body}))
+              (.catch (fn [e]
+                        ^{::request  request
+                          ::response response}
+                        {:error e})))))))))
 
 (def get request)
 
@@ -134,3 +142,16 @@
 
 (defn head [url & [opts]]
   (request url (assoc opts :method :head)))
+
+
+(comment
+  (p/let [result (get "/as400/paginated/VSBSTAMDTA.STOVKP"
+                      {:query-params {:page 1
+                                      :page-size 20}})]
+    (def xxx result))
+
+  (p/let [body (:body xxx)]
+    (def body body))
+
+  (p/let [res (head "/as400/paginated/VSBSTAMDTA.STOVKP")]
+    (def xxx res)))
