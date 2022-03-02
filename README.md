@@ -1,7 +1,10 @@
+*Note: * this is a fork of lambdaisland/fetch which is only different in that it removes 
+dependencies on kitchen-async and js-interop libraries.
+
 # lambdaisland/fetch
 
 <!-- badges -->
-[![cljdoc badge](https://cljdoc.org/badge/lambdaisland/fetch)](https://cljdoc.org/d/lambdaisland/fetch) [![Clojars Project](https://img.shields.io/clojars/v/lambdaisland/fetch.svg)](https://clojars.org/lambdaisland/fetch)
+[![Clojars Project](https://img.shields.io/clojars/v/com.widdindustries/fetch.svg)](https://clojars.org/com.widdindustries/fetch)
 <!-- /badges -->
 
 ClojureScript wrapper around the JavaScript fetch API.
