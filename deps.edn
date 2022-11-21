@@ -1,14 +1,18 @@
 {:paths ["src" "test" "resources"]
- :deps  {mhuebert/kitchen-async     {:mvn/version "0.1.0"}
-         lambdaisland/uri           {:mvn/version "1.13.95"}
-         com.cognitect/transit-cljs {:mvn/version "0.8.280"}
-         applied-science/js-interop {:mvn/version "0.3.3"}}
+ :deps  {lambdaisland/uri           {:mvn/version "1.13.95"}
+         com.cognitect/transit-cljs {:mvn/version "0.8.280"}}
 
  :aliases
  {:dev
-  {:extra-paths ["dev"]
-   :extra-deps  {thheller/shadow-cljs {:mvn/version "2.20.10"}}}
+  {:extra-paths ["dev" "test_server" "web-target"]
+   :extra-deps  {com.widdindustries/tiado-cljs2
+                 {:git/url "https://github.com/henryw374/tiado-cljs2.git"
+                  :sha "0f3507c377dc76ea4c471d43dd91395e498c0e73"}
+                 lambdaisland/webstuff {:git/url "https://github.com/lambdaisland/webstuff.git"
+                                        :sha "9284216340a8107dea553f20bc247787f4f2efa9"}
+                 cljs-timeout-test/cljs-timeout-test {:mvn/version "0.1.0"}
+                 mhuebert/kitchen-async     {:mvn/version "0.1.0"}
+                 applied-science/js-interop {:mvn/version "0.3.3"}
+                 }}
 
-  :test
-  {:extra-deps {lambdaisland/kaocha      {:mvn/version "RELEASE"}
-                com.lambdaisland/kaocha-cljs {:mvn/version "1.4.130"}}}}}
+  }}

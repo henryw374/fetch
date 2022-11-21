@@ -1,7 +1,8 @@
 (ns lambdaisland.fetch-test
   (:require [applied-science.js-interop :as j]
             [clojure.pprint :as pprint]
-            [clojure.test :refer [deftest testing is are use-fixtures run-tests join-fixtures async]]
+            [clojure.test :refer [deftest testing is are use-fixtures run-tests join-fixtures]]
+            [widdindustries.timeout-test :refer [async-timeout async-timeout-at]]
             [kitchen-async.promise :as p]
             [lambdaisland.fetch :as fetch]))
 
@@ -12,7 +13,7 @@
   (set! js/fetch (js/require "node-fetch")))
 
 (deftest transit-default
-  (async
+  (async-timeout
    done
    (p/let [res (fetch/get "http://localhost:9999/hello")]
      (is (= "application/transit+json; charset=utf-8" (get-in res [:headers "content-type"])))
@@ -20,7 +21,7 @@
      (done))))
 
 (deftest json-support
-  (async
+  (async-timeout
    done
    (p/let [res (fetch/post "http://localhost:9999/echo"
                            {:accept :json
@@ -37,7 +38,7 @@
      (done))))
 
 (deftest custom-header
-  (async
+  (async-timeout
    done
    (p/let [res (fetch/post "http://localhost:9999/echo"
                            {:headers
@@ -47,7 +48,7 @@
      (done))))
 
 (deftest form-encoded
-  (async
+  (async-timeout
    done
    (p/let [res (fetch/post "http://localhost:9999/echo"
                            {:content-type :form-encoded
@@ -59,7 +60,7 @@
      (done))))
 
 (deftest add-query-params
-  (async
+  (async-timeout
    done
    (p/then
     (p/all
@@ -79,4 +80,4 @@
 
       (p/let [res (fetch/get "http://localhost:9999/echo?x=y")]
         (is (= {"x" "y"} (get-in res [:body :params]))))])
-    done)))
+     (done))))
