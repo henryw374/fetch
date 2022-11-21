@@ -99,15 +99,15 @@
                     uri/uri
                     (uri/assoc-query* query-params)
                     str)
-        request (let [r (fetch-opts opts)]
+        request-opts (let [r (fetch-opts opts)]
                   (when body
                     (aset r "body" (if (string? body)
                                       body
                                       (encode-body content-type body opts))))
                   (aset r "url" url)
-                  r)]
+                  r)]   
     (->
-      (js/fetch url request)
+      (js/fetch url request-opts)
       (.then
         (fn [response]
           (let [headers (.-headers ^js response)
@@ -119,15 +119,16 @@
             (->
               (decode-body content-type response opts)
               (.then (fn [body]
-                       ^{::request  request
+                       ^{::request  request-opts
                          ::response response}
                        {:status  (.-status ^js response)
                         :headers header-map
                         :body    body}))
               (.catch (fn [e]
-                        ^{::request  request
+                        ^{::request  request-opts
                           ::response response}
-                        {:error e})))))))))
+                        {:error e})))))))
+    ))
 
 (def get request)
 

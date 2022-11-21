@@ -1,9 +1,12 @@
 *Note: * this is a fork of lambdaisland/fetch which is only different in that it removes 
 dependencies on kitchen-async and js-interop libraries.
 
+It does also add dependencies and config to make the tests runnable
+
 # lambdaisland/fetch
 
 <!-- badges -->
+[![Tests build](https://github.com/henryw374/fetch/actions/workflows/tests.yaml/badge.svg)](https://github.com/henryw374/fetch/actions/workflows/tests.yaml)
 [![Clojars Project](https://img.shields.io/clojars/v/com.widdindustries/fetch.svg)](https://clojars.org/com.widdindustries/fetch)
 <!-- /badges -->
 
